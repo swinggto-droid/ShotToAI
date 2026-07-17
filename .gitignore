@@ -1,0 +1,9 @@
+# Build output
+/dist/*.exe
+
+# Editor / OS cruft
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.log
