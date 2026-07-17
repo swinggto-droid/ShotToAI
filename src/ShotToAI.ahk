@@ -49,8 +49,13 @@ if !FileExist(flag) {
 
 ; ---- Hotkeys ---------------------------------------------------------------
 #+a:: CaptureAndPaste()           ; Win + Shift + A
-if EnableBacktickHotkey           ; ` key alone (SC029). Modified `+ combos pass through.
-    Hotkey("SC029", (*) => CaptureAndPaste())
+if EnableBacktickHotkey {         ; ` key (SC029) as a dedicated capture key
+    Hotkey("SC029",     (*) => CaptureAndPaste())   ; ` alone  -> monitor under cursor
+    Hotkey("SC029 & 1", (*) => CaptureMonitor(1))   ; ` + 1    -> leftmost monitor
+    Hotkey("SC029 & 2", (*) => CaptureMonitor(2))   ; ` + 2    -> second from left
+    Hotkey("SC029 & 3", (*) => CaptureMonitor(3))   ; ` + 3    -> third from left
+    Hotkey("SC029 & 4", (*) => CaptureMonitor(4))   ; ` + 4    -> fourth, if present
+}
 
 ShowHelp() {
     MsgBox(
@@ -59,18 +64,59 @@ ShowHelp() {
       . "2) Move your MOUSE onto the screen you want to capture.`n"
       . "3) Press  Win + Shift + A   (or the `` key, if enabled).`n`n"
       . "The monitor under your mouse is captured and pasted into the`n"
-      . "focused text box. Right-click the tray icon for options.",
+      . "focused text box.`n`n"
+      . "Pick a screen directly:   `` + 1 / 2 / 3`n"
+      . "(numbered left to right across your desktop)`n`n"
+      . "Right-click the tray icon for options.",
         "ShotToAI", 0x40)
 }
 
+; Capture the monitor the mouse cursor is currently on.
 CaptureAndPaste() {
-    m := GetCursorMonitorRect()   ; monitor the mouse cursor sits on
-    if (m.w > 0 && CaptureRegionToClipboardDIB(m.x, m.y, m.w, m.h)) {
+    m := GetCursorMonitorRect()
+    PasteCapture(m.x, m.y, m.w, m.h)
+}
+
+; Capture monitor #n, numbered left-to-right (1 = leftmost).
+CaptureMonitor(n) {
+    mons := GetMonitorsLeftToRight()
+    if (n < 1 || n > mons.Length) {
+        TrayTip("ShotToAI", "No monitor " n " (" mons.Length " connected).", 0x2)
+        return
+    }
+    m := mons[n]
+    PasteCapture(m.x, m.y, m.w, m.h)
+}
+
+PasteCapture(x, y, w, h) {
+    if (w > 0 && CaptureRegionToClipboardDIB(x, y, w, h)) {
         Sleep(80)                 ; let the clipboard settle
         Send("^v")                ; paste into the focused input
     } else {
         TrayTip("ShotToAI", "Screen capture failed.", 0x3)
     }
+}
+
+; All monitors as {x,y,w,h}, sorted left-to-right (then top-to-bottom).
+; Physical position, not the OS enumeration order — so "1" is always the
+; leftmost screen regardless of how Windows numbered the displays.
+GetMonitorsLeftToRight() {
+    mons := []
+    loop MonitorGetCount() {
+        MonitorGet(A_Index, &l, &t, &r, &b)
+        mons.Push({ x: l, y: t, w: r - l, h: b - t })
+    }
+    loop mons.Length - 1 {        ; insertion sort
+        i := A_Index + 1
+        cur := mons[i]
+        j := i - 1
+        while (j >= 1 && (mons[j].x > cur.x || (mons[j].x = cur.x && mons[j].y > cur.y))) {
+            mons[j + 1] := mons[j]
+            j--
+        }
+        mons[j + 1] := cur
+    }
+    return mons
 }
 
 ; Rectangle {x,y,w,h} of the monitor under the mouse cursor (falls back empty).
