@@ -14,6 +14,12 @@
 ;  License: MIT.  https://github.com/<your-handle>/ShotToAI
 ; ===========================================================================
 
+; ---- Config ----------------------------------------------------------------
+; Press the ` (backtick) key ALONE to capture. Handy if you never type a
+; literal backtick. Modified backtick still works (Shift+`=~, Ctrl+`=terminal).
+; Set to false if you want the backtick key to type normally.
+EnableBacktickHotkey := true
+
 DllCall("SetProcessDPIAware")     ; capture at native resolution on scaled displays
 
 ; ---- Tray icon + menu ------------------------------------------------------
@@ -41,15 +47,17 @@ if !FileExist(flag) {
     ShowHelp()
 }
 
-; ---- The hotkey ------------------------------------------------------------
-#+a:: CaptureAndPaste()           ; # = Win, + = Shift, a = A
+; ---- Hotkeys ---------------------------------------------------------------
+#+a:: CaptureAndPaste()           ; Win + Shift + A
+if EnableBacktickHotkey           ; ` key alone (SC029). Modified `+ combos pass through.
+    Hotkey("SC029", (*) => CaptureAndPaste())
 
 ShowHelp() {
     MsgBox(
         "ShotToAI is running in your system tray.`n`n"
       . "1) Click your AI's text box so it has focus.`n"
       . "2) Move your MOUSE onto the screen you want to capture.`n"
-      . "3) Press  Win + Shift + A.`n`n"
+      . "3) Press  Win + Shift + A   (or the `` key, if enabled).`n`n"
       . "The monitor under your mouse is captured and pasted into the`n"
       . "focused text box. Right-click the tray icon for options.",
         "ShotToAI", 0x40)
