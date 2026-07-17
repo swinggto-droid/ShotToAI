@@ -2,11 +2,11 @@
 
 **Screenshot straight into your AI coding assistant — one keypress.**
 
-Press <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd>. ShotToAI captures the monitor your
-mouse is on and pastes it into whatever text box has focus — Claude Code, Cursor,
+Hold <kbd>`</kbd> and press <kbd>1</kbd>, <kbd>2</kbd> or <kbd>3</kbd>. ShotToAI grabs
+that monitor and pastes it into whatever text box has focus — Claude Code, Cursor,
 ChatGPT, a chat window, anywhere.
 
-No more *Win+Shift+S → drag a box → Ctrl+V*. Just point and press.
+No more *Win+Shift+S → drag a box → Ctrl+V*. Just press two keys.
 
 ![demo](docs/demo.gif) <!-- TODO: record a short gif and drop it here -->
 
@@ -17,10 +17,14 @@ No more *Win+Shift+S → drag a box → Ctrl+V*. Just point and press.
 - **The PrintScreen key is broken for this.** On recent Windows 11 builds it opens
   the Snipping Tool instead of copying the screen. ShotToAI grabs the pixels
   directly via GDI, so nothing hijacks the keypress.
-- **Multi-monitor friendly.** It captures only the screen under your mouse — not a
-  4920×1920 wall of three monitors your AI can't make sense of.
-- **Focus stays put.** Mouse position picks the screen; keyboard focus stays in your
-  AI's text box. Point the mouse at the content, keep the cursor in the chat, press.
+- **Multi-monitor first.** Name the screen you want — not a 4920×1920 wall of three
+  monitors your AI can't make sense of. Screens are numbered left to right by
+  physical position, so <kbd>`</kbd>+<kbd>2</kbd> is always the middle one.
+- **Nothing moves.** No dragging a selection box, no moving your mouse, no losing
+  focus. Keep typing in the chat, press two keys, the screenshot is there.
+- **Your other shortcuts survive.** <kbd>Ctrl</kbd>+<kbd>`</kbd> (terminal toggle),
+  <kbd>Shift</kbd>+<kbd>`</kbd> (`~`) and friends pass through untouched. No Win-key
+  hotkeys either — those make AHK mask the Win keyup and break the Start menu.
 
 ## Install
 
@@ -38,17 +42,25 @@ No more *Win+Shift+S → drag a box → Ctrl+V*. Just point and press.
 ## Use
 
 1. Click your AI's text box so it has focus.
-2. Move your **mouse** onto the screen you want to capture.
-3. Press <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd>.
+2. Hold <kbd>`</kbd> and press the number of the screen you want.
 
-Right-click the tray icon for help or to exit.
+| Shortcut | Captures |
+| --- | --- |
+| <kbd>`</kbd>+<kbd>1</kbd> | Leftmost screen |
+| <kbd>`</kbd>+<kbd>2</kbd> | Second from left |
+| <kbd>`</kbd>+<kbd>3</kbd> | Third from left |
+
+Right-click the tray icon for help, a cursor-screen capture, or to exit.
 
 ## Notes & limits
 
+- **The bare <kbd>`</kbd> key stops typing a backtick** — it becomes a capture prefix.
+  If you write template literals or markdown by hand, set `EnableBacktickHotkey := false`
+  at the top of the script. Modified combos (<kbd>Ctrl</kbd>+<kbd>`</kbd>,
+  <kbd>Shift</kbd>+<kbd>`</kbd>) are unaffected either way.
 - Paste lands wherever the keyboard focus is. If focus is in a code editor instead of
   the chat box, the image pastes there — same as a manual Ctrl+V.
-- Captures the **whole monitor** under the cursor. Region/window capture and
-  annotation are on the roadmap.
+- Captures the **whole monitor**. Region/window capture and annotation are on the roadmap.
 - Windows only (uses Win32 GDI + clipboard APIs).
 
 ## Roadmap

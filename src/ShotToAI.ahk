@@ -15,16 +15,16 @@
 ; ===========================================================================
 
 ; ---- Config ----------------------------------------------------------------
-; Press the ` (backtick) key ALONE to capture. Handy if you never type a
-; literal backtick. Modified backtick still works (Shift+`=~, Ctrl+`=terminal).
-; Set to false if you want the backtick key to type normally.
+; Use ` (backtick) + 1/2/3 to capture a specific monitor. Handy if you never
+; type a literal backtick. Modified backtick still works (Shift+`=~,
+; Ctrl+`=terminal). Set to false to leave the backtick key completely alone.
 EnableBacktickHotkey := true
 
 DllCall("SetProcessDPIAware")     ; capture at native resolution on scaled displays
 
 ; ---- Tray icon + menu ------------------------------------------------------
 TraySetIcon("shell32.dll", 260)
-A_IconTip := "ShotToAI  —  Win+Shift+A: capture → paste into AI"
+A_IconTip := "ShotToAI  —  ` + 1/2/3: capture a screen → paste into AI"
 
 tray := A_TrayMenu
 tray.Delete()                     ; start from a clean menu
@@ -32,7 +32,7 @@ tray.Add("ShotToAI", (*) => 0)
 tray.Disable("ShotToAI")
 tray.Add()
 tray.Add("How to use", (*) => ShowHelp())
-tray.Add("Capture now (Win+Shift+A)", (*) => CaptureAndPaste())
+tray.Add("Capture screen under cursor", (*) => CaptureAndPaste())
 tray.Add()
 tray.Add("Exit", (*) => ExitApp())
 tray.Default := "How to use"
@@ -48,25 +48,35 @@ if !FileExist(flag) {
 }
 
 ; ---- Hotkeys ---------------------------------------------------------------
-#+a:: CaptureAndPaste()           ; Win + Shift + A
-if EnableBacktickHotkey {         ; ` key (SC029) as a dedicated capture key
-    Hotkey("SC029",     (*) => CaptureAndPaste())   ; ` alone  -> monitor under cursor
-    Hotkey("SC029 & 1", (*) => CaptureMonitor(1))   ; ` + 1    -> leftmost monitor
-    Hotkey("SC029 & 2", (*) => CaptureMonitor(2))   ; ` + 2    -> second from left
-    Hotkey("SC029 & 3", (*) => CaptureMonitor(3))   ; ` + 3    -> third from left
-    Hotkey("SC029 & 4", (*) => CaptureMonitor(4))   ; ` + 4    -> fourth, if present
+; Deliberately NO Win-key hotkeys. AHK masks the Win keyup whenever a #-prefixed
+; hotkey exists, which stops the Win key from opening the Start menu. Keeping the
+; Win key out of this script entirely avoids that whole class of breakage.
+if EnableBacktickHotkey {         ; ` key (SC029) as a dedicated capture prefix
+    Hotkey("SC029 & 1", (*) => CaptureMonitor(1))   ; ` + 1 -> leftmost monitor
+    Hotkey("SC029 & 2", (*) => CaptureMonitor(2))   ; ` + 2 -> second from left
+    Hotkey("SC029 & 3", (*) => CaptureMonitor(3))   ; ` + 3 -> third from left
+    Hotkey("SC029 & 4", (*) => CaptureMonitor(4))   ; ` + 4 -> fourth, if present
+
+    ; Hooking ` as a prefix makes Windows swallow it — including when a modifier
+    ; is held, which would kill Ctrl+` (VS Code terminal toggle) and Shift+` (~).
+    ; Catch those variants and re-emit them so they behave natively.
+    ; Re-emitting is safe: a script's own Send does not retrigger its own hotkeys.
+    for pfx in ["^", "+", "!", "^+"]
+        Hotkey(pfx "SC029", PassThroughBacktick.Bind(pfx))
+}
+
+PassThroughBacktick(pfx, *) {
+    SendInput(pfx "{SC029}")
 }
 
 ShowHelp() {
     MsgBox(
         "ShotToAI is running in your system tray.`n`n"
       . "1) Click your AI's text box so it has focus.`n"
-      . "2) Move your MOUSE onto the screen you want to capture.`n"
-      . "3) Press  Win + Shift + A   (or the `` key, if enabled).`n`n"
-      . "The monitor under your mouse is captured and pasted into the`n"
-      . "focused text box.`n`n"
-      . "Pick a screen directly:   `` + 1 / 2 / 3`n"
-      . "(numbered left to right across your desktop)`n`n"
+      . "2) Hold  ``  and press  1 , 2  or  3 .`n`n"
+      . "That screen is captured and pasted straight into the focused`n"
+      . "text box. Screens are numbered left to right across your desktop.`n`n"
+      . "Ctrl+`` , Shift+``  and other `` combos keep working normally.`n`n"
       . "Right-click the tray icon for options.",
         "ShotToAI", 0x40)
 }
