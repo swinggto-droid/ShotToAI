@@ -54,17 +54,21 @@ Right-click the tray icon for help, a cursor-screen capture, pause, or to exit.
 
 ## Pause
 
-Right-click the tray icon and pick **Pause capture** to switch the shortcuts off.
-The icon turns into a red "no entry" sign and the <kbd>`</kbd> key types a literal
-backtick again. Pick it a second time to resume.
+Right-click the tray icon and pick **캡처 일시 중지** (pause capture) to switch the
+shortcuts off. The icon turns into a red "no entry" sign and the <kbd>`</kbd> key
+types a literal backtick again. Pick it a second time to resume.
 
-Pausing only silences the keyboard shortcuts — *Capture screen under cursor* in the
-tray menu still works, and ShotToAI always starts up active after a restart.
+Pausing only silences the keyboard shortcuts — **마우스가 있는 화면 캡처** (capture
+the screen under the cursor) in the tray menu still works, and ShotToAI always
+starts up active after a restart.
+
+> The tray menu and dialogs are in Korean. The labels live in the `MENU_*` variables
+> at the top of `src/ShotToAI.ahk` if you want them in another language.
 
 ## Notes & limits
 
 - **The bare <kbd>`</kbd> key stops typing a backtick** — it becomes a capture prefix.
-  For the occasional template literal, hit **Pause capture** in the tray menu. If you
+  For the occasional template literal, hit **캡처 일시 중지** in the tray menu. If you
   never want the prefix at all, set `EnableBacktickHotkey := false` at the top of the
   script. Modified combos (<kbd>Ctrl</kbd>+<kbd>`</kbd>, <kbd>Shift</kbd>+<kbd>`</kbd>)
   are unaffected either way.
