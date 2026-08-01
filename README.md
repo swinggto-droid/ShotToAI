@@ -50,14 +50,24 @@ No more *Win+Shift+S → drag a box → Ctrl+V*. Just press two keys.
 | <kbd>`</kbd>+<kbd>2</kbd> | Second from left |
 | <kbd>`</kbd>+<kbd>3</kbd> | Third from left |
 
-Right-click the tray icon for help, a cursor-screen capture, or to exit.
+Right-click the tray icon for help, a cursor-screen capture, pause, or to exit.
+
+## Pause
+
+Right-click the tray icon and pick **Pause capture** to switch the shortcuts off.
+The icon turns into a red "no entry" sign and the <kbd>`</kbd> key types a literal
+backtick again. Pick it a second time to resume.
+
+Pausing only silences the keyboard shortcuts — *Capture screen under cursor* in the
+tray menu still works, and ShotToAI always starts up active after a restart.
 
 ## Notes & limits
 
 - **The bare <kbd>`</kbd> key stops typing a backtick** — it becomes a capture prefix.
-  If you write template literals or markdown by hand, set `EnableBacktickHotkey := false`
-  at the top of the script. Modified combos (<kbd>Ctrl</kbd>+<kbd>`</kbd>,
-  <kbd>Shift</kbd>+<kbd>`</kbd>) are unaffected either way.
+  For the occasional template literal, hit **Pause capture** in the tray menu. If you
+  never want the prefix at all, set `EnableBacktickHotkey := false` at the top of the
+  script. Modified combos (<kbd>Ctrl</kbd>+<kbd>`</kbd>, <kbd>Shift</kbd>+<kbd>`</kbd>)
+  are unaffected either way.
 - Paste lands wherever the keyboard focus is. If focus is in a code editor instead of
   the chat box, the image pastes there — same as a manual Ctrl+V.
 - Captures the **whole monitor**. Region/window capture and annotation are on the roadmap.

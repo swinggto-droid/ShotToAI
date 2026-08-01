@@ -1,11 +1,14 @@
-#Requires AutoHotkey v2.0
+﻿#Requires AutoHotkey v2.0
 #SingleInstance Force
 ; ===========================================================================
 ;  ShotToAI  —  Screenshot straight into your AI coding assistant.
 ;
-;  Press  Win + Shift + A  ->  captures the monitor under your mouse cursor,
-;  puts it on the clipboard, and pastes it into whatever input has focus
-;  (Claude Code, Cursor, ChatGPT, a chat box, anywhere).
+;  Hold  `  and press  1 / 2 / 3  ->  captures that monitor, puts it on the
+;  clipboard, and pastes it into whatever input has focus (Claude Code,
+;  Cursor, ChatGPT, a chat box, anywhere).
+;
+;  Right-click the tray icon and pick "Pause capture" to silence the hotkeys.
+;  While paused the ` key types a literal backtick again.
 ;
 ;  Why not just PrintScreen? On recent Windows 11 builds the PrintScreen key
 ;  opens the Snipping Tool instead of copying the screen. ShotToAI grabs the
@@ -20,22 +23,43 @@
 ; Ctrl+`=terminal). Set to false to leave the backtick key completely alone.
 EnableBacktickHotkey := true
 
+; Tray icon numbers within shell32.dll: scissors while armed, a red "no entry"
+; sign while paused, so the tray shows the current state at a glance.
+ICON_ACTIVE := 260
+ICON_PAUSED := 110
+
+Paused := false                   ; flipped by the tray menu; see TogglePause()
+
+; Tray menu labels. Kept in variables because Menu.Check/Uncheck/Disable look an
+; item up by its exact label — a typo in one of the copies would only surface at
+; runtime, as an error thrown while the menu is being clicked.
+MENU_HELP  := "사용법"
+MENU_SHOT  := "마우스가 있는 화면 캡처"
+MENU_PAUSE := "캡처 일시 중지"
+MENU_EXIT  := "종료"
+
 DllCall("SetProcessDPIAware")     ; capture at native resolution on scaled displays
 
 ; ---- Tray icon + menu ------------------------------------------------------
-TraySetIcon("shell32.dll", 260)
-A_IconTip := "ShotToAI  —  ` + 1/2/3: capture a screen → paste into AI"
+; Freeze the icon so Suspend() can't swap in AutoHotkey's own suspend icon —
+; TogglePause() switches between ICON_ACTIVE and ICON_PAUSED itself.
+TraySetIcon("shell32.dll", ICON_ACTIVE, true)
+UpdateIconTip()
 
 tray := A_TrayMenu
 tray.Delete()                     ; start from a clean menu
 tray.Add("ShotToAI", (*) => 0)
 tray.Disable("ShotToAI")
 tray.Add()
-tray.Add("How to use", (*) => ShowHelp())
-tray.Add("Capture screen under cursor", (*) => CaptureAndPaste())
+tray.Add(MENU_HELP, (*) => ShowHelp())
+tray.Add(MENU_SHOT, (*) => CaptureAndPaste())
 tray.Add()
-tray.Add("Exit", (*) => ExitApp())
-tray.Default := "How to use"
+tray.Add(MENU_PAUSE, (*) => TogglePause())
+tray.Add()
+tray.Add(MENU_EXIT, (*) => ExitApp())
+tray.Default := MENU_HELP
+if !EnableBacktickHotkey          ; no hotkeys registered, so there is nothing to pause
+    tray.Disable(MENU_PAUSE)
 
 ; ---- First-run welcome -----------------------------------------------------
 flag := A_AppData "\ShotToAI\firstrun.flag"
@@ -70,15 +94,43 @@ PassThroughBacktick(pfx, *) {
 }
 
 ShowHelp() {
+    global MENU_PAUSE
     MsgBox(
-        "ShotToAI is running in your system tray.`n`n"
-      . "1) Click your AI's text box so it has focus.`n"
-      . "2) Hold  ``  and press  1 , 2  or  3 .`n`n"
-      . "That screen is captured and pasted straight into the focused`n"
-      . "text box. Screens are numbered left to right across your desktop.`n`n"
-      . "Ctrl+`` , Shift+``  and other `` combos keep working normally.`n`n"
-      . "Right-click the tray icon for options.",
+        "ShotToAI가 작업 표시줄 알림 영역에서 실행 중입니다.`n`n"
+      . "1) AI 입력창을 클릭해 커서를 둡니다.`n"
+      . "2) ``  키를 누른 채  1 , 2 , 3  중 하나를 누릅니다.`n`n"
+      . "그 화면이 캡처되어 커서가 있는 입력창에 바로 붙습니다.`n"
+      . "화면 번호는 왼쪽부터 순서대로 매겨집니다.`n`n"
+      . "Ctrl+`` , Shift+`` 처럼 조합키를 쓴 백틱은 그대로 동작합니다.`n`n"
+      . "백틱을 직접 입력해야 하면 트레이 아이콘을 우클릭해`n"
+      . "[" . MENU_PAUSE . "]를 선택하세요. 다시 선택하면 켜집니다.`n`n"
+      . "나머지 기능도 트레이 아이콘 우클릭 메뉴에 있습니다.",
         "ShotToAI", 0x40)
+}
+
+; Turn the hotkeys off and on from the tray menu.
+; Suspend() disables every hotkey, which also un-hooks ` as a prefix key — so a
+; paused ShotToAI leaves the backtick free to type a literal backtick. Tray menu
+; items are not hotkeys, so "Capture screen under cursor" still works.
+TogglePause(*) {
+    global Paused, ICON_ACTIVE, ICON_PAUSED, MENU_PAUSE
+    Paused := !Paused
+    Suspend(Paused)
+    if Paused
+        A_TrayMenu.Check(MENU_PAUSE)
+    else
+        A_TrayMenu.Uncheck(MENU_PAUSE)
+    TraySetIcon("shell32.dll", Paused ? ICON_PAUSED : ICON_ACTIVE)
+    UpdateIconTip()
+    TrayTip(Paused ? "단축키를 껐습니다. 이제 `` 키로 백틱을 입력할 수 있습니다."
+                   : "`` + 1/2/3 으로 다시 화면을 캡처할 수 있습니다."
+          , Paused ? "ShotToAI 일시 중지" : "ShotToAI 작동 중", 0x1)
+}
+
+UpdateIconTip() {
+    global Paused
+    A_IconTip := Paused ? "ShotToAI (일시 중지)  —  트레이 아이콘 우클릭으로 다시 시작"
+                        : "ShotToAI  —  `` + 1/2/3 : 화면 캡처해서 AI에 붙여넣기"
 }
 
 ; Capture the monitor the mouse cursor is currently on.
@@ -91,7 +143,7 @@ CaptureAndPaste() {
 CaptureMonitor(n) {
     mons := GetMonitorsLeftToRight()
     if (n < 1 || n > mons.Length) {
-        TrayTip("ShotToAI", "No monitor " n " (" mons.Length " connected).", 0x2)
+        TrayTip("화면 " n "번은 없습니다 (연결된 화면 " mons.Length "개).", "ShotToAI", 0x2)
         return
     }
     m := mons[n]
@@ -103,7 +155,7 @@ PasteCapture(x, y, w, h) {
         Sleep(80)                 ; let the clipboard settle
         Send("^v")                ; paste into the focused input
     } else {
-        TrayTip("ShotToAI", "Screen capture failed.", 0x3)
+        TrayTip("화면 캡처에 실패했습니다.", "ShotToAI", 0x3)
     }
 }
 
