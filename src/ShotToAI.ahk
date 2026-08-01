@@ -14,7 +14,7 @@
 ;  opens the Snipping Tool instead of copying the screen. ShotToAI grabs the
 ;  pixels directly via GDI, so nothing gets in the way.
 ;
-;  License: MIT.  https://github.com/<your-handle>/ShotToAI
+;  License: MIT.  https://github.com/swinggto-droid/ShotToAI
 ; ===========================================================================
 
 ; ---- Config ----------------------------------------------------------------
