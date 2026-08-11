@@ -202,8 +202,15 @@ GetCursorMonitorRect() {
 
 ; Capture a screen region into a 24-bit bottom-up DIB and put it on the
 ; clipboard as CF_DIB (the format Chromium/Electron apps read on paste).
+;
+; Plain SRCCOPY, deliberately without CAPTUREBLT. CAPTUREBLT asks DWM to fold
+; layered windows back into the screen DC, and on Windows 11 that path hands
+; back a blank white surface once the desktop has been idle for a few seconds —
+; the capture works for the first few seconds after a redraw and is pure white
+; from then on. Layered windows are already composited into the screen DC on
+; every DWM-era Windows, so the flag buys nothing here anyway.
 CaptureRegionToClipboardDIB(vx, vy, vw, vh) {
-    static SRCCOPY := 0x00CC0020, CAPTUREBLT := 0x40000000
+    static SRCCOPY := 0x00CC0020
     static BI_RGB := 0, DIB_RGB_COLORS := 0, CF_DIB := 8, GMEM_MOVEABLE := 0x2
 
     if (vw <= 0 || vh <= 0)
@@ -215,7 +222,7 @@ CaptureRegionToClipboardDIB(vx, vy, vw, vh) {
     obm       := DllCall("SelectObject", "ptr", hdcMem, "ptr", hbm, "ptr")
 
     DllCall("BitBlt", "ptr", hdcMem, "int", 0, "int", 0, "int", vw, "int", vh
-                    , "ptr", hdcScreen, "int", vx, "int", vy, "uint", SRCCOPY | CAPTUREBLT)
+                    , "ptr", hdcScreen, "int", vx, "int", vy, "uint", SRCCOPY)
 
     DllCall("SelectObject", "ptr", hdcMem, "ptr", obm, "ptr")   ; deselect before GetDIBits
 
