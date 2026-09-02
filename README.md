@@ -8,7 +8,7 @@ ChatGPT, a chat window, anywhere.
 
 No more *Win+Shift+S → drag a box → Ctrl+V*. Just press two keys.
 
-![demo](docs/demo.gif) <!-- TODO: record a short gif and drop it here -->
+![How ShotToAI works: hold backtick, press 2, and the second monitor lands in the focused text box](docs/how-it-works.svg)
 
 ---
 
@@ -33,6 +33,12 @@ No more *Win+Shift+S → drag a box → Ctrl+V*. Just press two keys.
 1. Grab `ShotToAI.exe` from the [latest release](../../releases/latest).
 2. Run it. It lives in your system tray.
 3. (Optional) Drop a shortcut in `shell:startup` to launch it at login.
+
+> The release binary is unsigned, so Windows SmartScreen shows a "Windows protected
+> your PC" prompt the first time — click **More info → Run anyway**. A few antivirus
+> engines also flag AutoHotkey-compiled executables as a false positive. If you would
+> rather not trust a binary, use Option B: the whole tool is one readable 270-line
+> script in `src/`.
 
 **Option B — run the script**
 
@@ -91,5 +97,4 @@ MIT © 2026 — see [LICENSE](LICENSE).
 
 ---
 
-<sub>If this saves you some clicks, a ⭐ or a coffee is appreciated.
-<!-- TODO: add Buy Me a Coffee / GitHub Sponsors link --></sub>
+<sub>If this saves you some clicks, a ⭐ is appreciated.</sub>
